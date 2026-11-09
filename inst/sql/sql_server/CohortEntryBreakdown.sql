@@ -10,6 +10,7 @@ IF OBJECT_ID('tempdb..@store_table', 'U') IS NOT NULL
 SELECT domain_table,
   domain_field,
   concept.concept_id,
+  cohort_start_year,
 	sum(concept_count) as concept_count,
 	max(subject_count) as subject_count
 {@store} ? {
@@ -21,6 +22,7 @@ FROM (
 	SELECT '@domain_table' AS domain_table,
 	  '@domain_concept_id' AS domain_field,
 	  @domain_concept_id AS concept_id,
+	  YEAR(cohort_start_date) AS cohort_start_year,
 		COUNT(*) AS concept_count,
 		COUNT(distinct subject_id) AS subject_count
 	FROM @cohort_database_schema.@cohort_table
@@ -31,7 +33,7 @@ FROM (
 		ON @domain_concept_id = concept_id
 	WHERE cohort_definition_id = @cohort_id
 		AND codeset_id IN (@primary_codeset_ids)
-	GROUP BY @domain_concept_id
+	GROUP BY @domain_concept_id, YEAR(cohort_start_date)
 	
 	{@use_source_concept_id} ? {
 	UNION
@@ -39,6 +41,7 @@ FROM (
 	SELECT '@domain_table' AS domain_table,
 	  '@domain_source_concept_id' AS domain_field,
 	  @domain_source_concept_id AS concept_id,
+	  YEAR(cohort_start_date) AS cohort_start_year,
 		COUNT(*) AS concept_count,
 		COUNT(distinct subject_id) AS subject_count
 	FROM @cohort_database_schema.@cohort_table
@@ -49,13 +52,14 @@ FROM (
 		ON @domain_concept_id = concept_id
 	WHERE cohort_definition_id = @cohort_id
 		AND codeset_id IN (@primary_codeset_ids)
-	GROUP BY @domain_source_concept_id
+	GROUP BY @domain_source_concept_id, YEAR(cohort_start_date)
 	
 	UNION
 	
 	SELECT '@domain_table' AS domain_table,
 	  '@domain_source_concept_id' AS domain_field,
 	  @domain_source_concept_id AS concept_id,
+	  YEAR(cohort_start_date) AS cohort_start_year,
 		COUNT(*) AS concept_count,
 		COUNT(distinct subject_id) AS subject_count
 	FROM @cohort_database_schema.@cohort_table
@@ -66,11 +70,11 @@ FROM (
 		ON @domain_source_concept_id = concept_id
 	WHERE cohort_definition_id = @cohort_id
 		AND codeset_id IN (@primary_codeset_ids)
-	GROUP BY @domain_source_concept_id
+	GROUP BY @domain_source_concept_id, YEAR(cohort_start_date)
 	}
 	
 	) concept_counts
 INNER JOIN @vocabulary_database_schema.concept
 	ON concept_counts.concept_id = concept.concept_id
 
-GROUP BY domain_table, domain_field, concept.concept_id;
+GROUP BY domain_table, domain_field, concept.concept_id, cohort_start_year;
