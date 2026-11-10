@@ -26,3 +26,5 @@ renv.lock
 MergedCohortDiagnosticsData.7z
 inst/shiny/DiagnosticsExplorer/UserCredentials.csv
 .rlib-dev
+.fakehome
+.styler_cache

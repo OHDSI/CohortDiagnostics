@@ -133,10 +133,13 @@ test_that("createResultsDataModel creates every table and records the migrations
   connectionDetails <- resultsDataModelTestConnectionDetails()
 
   connection <- DatabaseConnector::connect(connectionDetails)
-  on.exit({
-    dropScratchSchema(connection)
-    DatabaseConnector::disconnect(connection)
-  }, add = TRUE)
+  on.exit(
+    {
+      dropScratchSchema(connection)
+      DatabaseConnector::disconnect(connection)
+    },
+    add = TRUE
+  )
   resetScratchSchema(connection)
 
   # The exact call that failed when cohort_start_year was declared in both the
@@ -175,10 +178,13 @@ test_that("cohort_start_year is added by the migration, not the DDL", {
   connectionDetails <- resultsDataModelTestConnectionDetails()
 
   connection <- DatabaseConnector::connect(connectionDetails)
-  on.exit({
-    dropScratchSchema(connection)
-    DatabaseConnector::disconnect(connection)
-  }, add = TRUE)
+  on.exit(
+    {
+      dropScratchSchema(connection)
+      DatabaseConnector::disconnect(connection)
+    },
+    add = TRUE
+  )
   resetScratchSchema(connection)
 
   CohortDiagnostics::createResultsDataModel(
@@ -210,10 +216,13 @@ test_that("migrating a legacy index_event_breakdown preserves its rows", {
   connectionDetails <- resultsDataModelTestConnectionDetails()
 
   connection <- DatabaseConnector::connect(connectionDetails)
-  on.exit({
-    dropScratchSchema(connection)
-    DatabaseConnector::disconnect(connection)
-  }, add = TRUE)
+  on.exit(
+    {
+      dropScratchSchema(connection)
+      DatabaseConnector::disconnect(connection)
+    },
+    add = TRUE
+  )
   resetScratchSchema(connection)
 
   # Build the pre-change schema from the DDL, which has no cohort_start_year,
