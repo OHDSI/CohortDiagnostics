@@ -104,12 +104,12 @@ packageFile <- function(...) {
   return(path)
 }
 
-TEST_SCHEMA <- "cd_ddl_test"
+testSchema <- "cd_ddl_test"
 
 resetScratchSchema <- function(connection) {
   DatabaseConnector::executeSql(
     connection,
-    sprintf("DROP SCHEMA IF EXISTS %s CASCADE; CREATE SCHEMA %s;", TEST_SCHEMA, TEST_SCHEMA),
+    sprintf("DROP SCHEMA IF EXISTS %s CASCADE; CREATE SCHEMA %s;", testSchema, testSchema),
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
@@ -119,7 +119,7 @@ dropScratchSchema <- function(connection) {
   try(
     DatabaseConnector::executeSql(
       connection,
-      sprintf("DROP SCHEMA IF EXISTS %s CASCADE;", TEST_SCHEMA),
+      sprintf("DROP SCHEMA IF EXISTS %s CASCADE;", testSchema),
       progressBar = FALSE,
       reportOverallTime = FALSE
     ),
@@ -145,7 +145,7 @@ test_that("createResultsDataModel creates every table and records the migrations
   expect_no_error(
     CohortDiagnostics::createResultsDataModel(
       connectionDetails = connectionDetails,
-      databaseSchema = TEST_SCHEMA
+      databaseSchema = testSchema
     )
   )
 
@@ -153,7 +153,7 @@ test_that("createResultsDataModel creates every table and records the migrations
     connection,
     sprintf(
       "SELECT table_name FROM information_schema.tables WHERE table_schema = '%s';",
-      TEST_SCHEMA
+      testSchema
     )
   )[[1]]
 
@@ -164,7 +164,7 @@ test_that("createResultsDataModel creates every table and records the migrations
   # migrations must be recorded, otherwise they would re-run on every call
   migrations <- DatabaseConnector::querySql(
     connection,
-    sprintf("SELECT migration_file FROM %s.migration;", TEST_SCHEMA)
+    sprintf("SELECT migration_file FROM %s.migration;", testSchema)
   )[[1]]
   expect_true("Migration_8-v4_0_0_index_event_breakdown_cohort_start_year.sql" %in% migrations)
 })
@@ -183,7 +183,7 @@ test_that("cohort_start_year is added by the migration, not the DDL", {
 
   CohortDiagnostics::createResultsDataModel(
     connectionDetails = connectionDetails,
-    databaseSchema = TEST_SCHEMA
+    databaseSchema = testSchema
   )
 
   columns <- DatabaseConnector::querySql(
@@ -192,7 +192,7 @@ test_that("cohort_start_year is added by the migration, not the DDL", {
       "SELECT column_name FROM information_schema.columns
         WHERE table_schema = '%s' AND table_name = 'index_event_breakdown'
         ORDER BY ordinal_position;",
-      TEST_SCHEMA
+      testSchema
     )
   )[[1]]
 
@@ -224,7 +224,7 @@ test_that("migrating a legacy index_event_breakdown preserves its rows", {
       sqlFilename = "CreateResultsDataModel.sql",
       packageName = "CohortDiagnostics",
       dbms = connection@dbms,
-      results_schema = TEST_SCHEMA,
+      results_schema = testSchema,
       table_prefix = ""
     ),
     progressBar = FALSE,
@@ -236,7 +236,7 @@ test_that("migrating a legacy index_event_breakdown preserves its rows", {
     sprintf(
       "SELECT column_name FROM information_schema.columns
         WHERE table_schema = '%s' AND table_name = 'index_event_breakdown';",
-      TEST_SCHEMA
+      testSchema
     )
   )[[1]]
   expect_false("cohort_start_year" %in% preMigrationColumns)
@@ -247,7 +247,7 @@ test_that("migrating a legacy index_event_breakdown preserves its rows", {
       "INSERT INTO %s.index_event_breakdown
          (concept_id, concept_count, subject_count, cohort_id, database_id, domain_field, domain_table)
        VALUES (201826, 100, 90, 1, 'legacy', 'condition_concept_id', 'condition_occurrence');",
-      TEST_SCHEMA
+      testSchema
     ),
     progressBar = FALSE,
     reportOverallTime = FALSE
@@ -257,7 +257,7 @@ test_that("migrating a legacy index_event_breakdown preserves its rows", {
   expect_no_error(
     CohortDiagnostics::migrateDataModel(
       connectionDetails = connectionDetails,
-      databaseSchema = TEST_SCHEMA
+      databaseSchema = testSchema
     )
   )
 
@@ -265,7 +265,7 @@ test_that("migrating a legacy index_event_breakdown preserves its rows", {
     connection,
     sprintf(
       "SELECT concept_id, concept_count, cohort_start_year FROM %s.index_event_breakdown;",
-      TEST_SCHEMA
+      testSchema
     )
   )
 
