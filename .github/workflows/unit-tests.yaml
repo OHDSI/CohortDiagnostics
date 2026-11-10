@@ -25,6 +25,27 @@ jobs:
       RUN_UNIT_TESTS: "TRUE"
       SKIP_DB_TESTS: "TRUE"
       INTEGRATION_TESTS: "FALSE"
+      # Results data model DDL tests run against the postgres service below
+      POSTGRES_PASSWORD: postgres
+      CD_TEST_POSTGRES_HOST: localhost/postgres
+      CD_TEST_POSTGRES_PORT: "5432"
+      CD_TEST_POSTGRES_USER: postgres
+      DATABASECONNECTOR_JAR_FOLDER: ${{ github.workspace }}/.jdbcDrivers
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -51,10 +72,28 @@ jobs:
             OHDSI/OhdsiShinyModules
           needs: check
 
+      - name: Download JDBC drivers
+        run: |
+          # DatabaseConnector >= 8 needs an explicit pathToDriver, and the
+          # results data model tests connect to the postgres service above
+          Rscript -e 'dir.create(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"), showWarnings = FALSE); DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))'
+
+      - name: Install package
+        run: |
+          # the DDL tests use system.file() and SqlRender::loadRenderTranslateSql(),
+          # which require the package to be installed rather than merely loaded
+          Rscript -e 'install.packages(".", repos = NULL, type = "source")'
+
+      - name: Verify postgres is reachable
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -c "SELECT version();"
+
       - name: Run Unit Tests
         run: |
-          # Use test_check but only for unit tests
-          # We use a custom script to avoid running the full R CMD check
-          # which is slower and might fail on non-test things (vignettes etc)
-          Rscript -e 'testthat::test_local(filter = "unit-", stop_on_failure = TRUE)'
+          # test_check/test_local with load_package = "installed": the results
+          # data model tests need system.file() to resolve the packaged SQL,
+          # which only works against an installed package (under
+          # load_package = "source" system.file() returns "" and those tests
+          # would skip rather than run).
+          Rscript -e 'testthat::test_local(filter = "unit-", stop_on_failure = TRUE, load_package = "installed")'
         shell: bash
