@@ -270,6 +270,25 @@ test_that("migrating a legacy index_event_breakdown preserves its rows", {
     )
   )
 
+  # the primary key must include cohort_start_year, otherwise year-stratified
+  # rows for one concept collide and upload fails with a duplicate key error
+  pkColumns <- DatabaseConnector::querySql(
+    connection,
+    sprintf(
+      "SELECT a.attname AS col FROM pg_index i
+        JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+        WHERE i.indrelid = '%s.index_event_breakdown'::regclass AND i.indisprimary;",
+      testSchema
+    )
+  )[[1]]
+  expect_setequal(
+    tolower(pkColumns),
+    c(
+      "concept_id", "cohort_id", "database_id",
+      "domain_field", "domain_table", "cohort_start_year"
+    )
+  )
+
   rows <- DatabaseConnector::querySql(
     connection,
     sprintf(
@@ -285,4 +304,58 @@ test_that("migrating a legacy index_event_breakdown preserves its rows", {
   expect_equal(rows[[2]], 100)
   # backfilled by Migration_8 as "year not recorded"
   expect_equal(rows[[3]], -1)
+})
+
+test_that("year-stratified index event rows can be uploaded after migrating", {
+  skip_if_not(canTestResultsDataModelDdl(), "No PostgreSQL server or JDBC driver configured")
+
+  connectionDetails <- resultsDataModelTestConnectionDetails()
+
+  connection <- DatabaseConnector::connect(connectionDetails)
+  on.exit(
+    {
+      dropScratchSchema(connection)
+      DatabaseConnector::disconnect(connection)
+    },
+    add = TRUE
+  )
+  resetScratchSchema(connection)
+
+  CohortDiagnostics::createResultsDataModel(
+    connectionDetails = connectionDetails,
+    databaseSchema = testSchema
+  )
+
+  # One concept entering the cohort in three different years produces three
+  # rows that share concept/cohort/database/domain. Before cohort_start_year
+  # was added to the database primary key these collided on insert and the
+  # upload failed with:
+  #   duplicate key value violates unique constraint "index_event_breakdown_pkey"
+  rows <- data.frame(
+    concept_id = 201826L,
+    concept_count = c(10L, 20L, 30L),
+    subject_count = c(10L, 20L, 30L),
+    cohort_id = 1L,
+    database_id = "test",
+    domain_field = "condition_concept_id",
+    domain_table = "condition_occurrence",
+    cohort_start_year = c(2020L, 2021L, 2022L)
+  )
+
+  expect_no_error(
+    DatabaseConnector::insertTable(
+      connection = connection,
+      tableName = sprintf("%s.index_event_breakdown", testSchema),
+      data = rows,
+      createTable = FALSE,
+      dropTableIfExists = FALSE,
+      progressBar = FALSE
+    )
+  )
+
+  count <- DatabaseConnector::querySql(
+    connection,
+    sprintf("SELECT COUNT(*) AS n FROM %s.index_event_breakdown;", testSchema)
+  )[[1]]
+  expect_equal(count, 3)
 })
