@@ -19,6 +19,30 @@ INTO @store_table
 	,concept_name
 }
 FROM (
+	-- Overall breakdown: one row per concept across the whole cohort.
+	-- subject_count here is a true COUNT(DISTINCT subject_id) over all years,
+	-- which cannot be reconstructed by summing the per-year rows below.
+	SELECT '@domain_table' AS domain_table,
+	  '@domain_concept_id' AS domain_field,
+	  @domain_concept_id AS concept_id,
+	  -1 AS cohort_start_year,
+		COUNT(*) AS concept_count,
+		COUNT(distinct subject_id) AS subject_count
+	FROM @cohort_database_schema.@cohort_table
+	INNER JOIN @cdm_database_schema.@domain_table
+		ON subject_id = person_id
+			AND cohort_start_date = @domain_start_date
+	INNER JOIN @concept_set_table
+		ON @domain_concept_id = concept_id
+	WHERE cohort_definition_id = @cohort_id
+		AND codeset_id IN (@primary_codeset_ids)
+	GROUP BY @domain_concept_id
+
+	UNION
+
+	-- Per cohort start year, for the trend view. subject_count is distinct
+	-- within the year, so these rows are detail only and are not summed to
+	-- produce the overall figures above.
 	SELECT '@domain_table' AS domain_table,
 	  '@domain_concept_id' AS domain_field,
 	  @domain_concept_id AS concept_id,
@@ -41,6 +65,24 @@ FROM (
 	SELECT '@domain_table' AS domain_table,
 	  '@domain_source_concept_id' AS domain_field,
 	  @domain_source_concept_id AS concept_id,
+	  -1 AS cohort_start_year,
+		COUNT(*) AS concept_count,
+		COUNT(distinct subject_id) AS subject_count
+	FROM @cohort_database_schema.@cohort_table
+	INNER JOIN @cdm_database_schema.@domain_table
+		ON subject_id = person_id
+			AND cohort_start_date = @domain_start_date
+	INNER JOIN @concept_set_table
+		ON @domain_concept_id = concept_id
+	WHERE cohort_definition_id = @cohort_id
+		AND codeset_id IN (@primary_codeset_ids)
+	GROUP BY @domain_source_concept_id
+	
+	UNION
+	
+	SELECT '@domain_table' AS domain_table,
+	  '@domain_source_concept_id' AS domain_field,
+	  @domain_source_concept_id AS concept_id,
 	  YEAR(cohort_start_date) AS cohort_start_year,
 		COUNT(*) AS concept_count,
 		COUNT(distinct subject_id) AS subject_count
@@ -52,7 +94,25 @@ FROM (
 		ON @domain_concept_id = concept_id
 	WHERE cohort_definition_id = @cohort_id
 		AND codeset_id IN (@primary_codeset_ids)
-	GROUP BY @domain_source_concept_id, YEAR(cohort_start_date)
+	GROUP BY @domain_concept_id, YEAR(cohort_start_date)
+	
+	UNION
+	
+	SELECT '@domain_table' AS domain_table,
+	  '@domain_source_concept_id' AS domain_field,
+	  @domain_source_concept_id AS concept_id,
+	  -1 AS cohort_start_year,
+		COUNT(*) AS concept_count,
+		COUNT(distinct subject_id) AS subject_count
+	FROM @cohort_database_schema.@cohort_table
+	INNER JOIN @cdm_database_schema.@domain_table
+		ON subject_id = person_id
+			AND cohort_start_date = @domain_start_date
+	INNER JOIN @concept_set_table
+		ON @domain_source_concept_id = concept_id
+	WHERE cohort_definition_id = @cohort_id
+		AND codeset_id IN (@primary_codeset_ids)
+	GROUP BY @domain_source_concept_id
 	
 	UNION
 	
