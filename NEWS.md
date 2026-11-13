@@ -25,6 +25,12 @@ Changes:
      >100% overlap in the diagnostics explorer)
    - Removed unused `subsetToRequiredCombis` and `writeToCsv.tbl_Andromeda` code
 
+3. Index event breakdown is now stratified by the calendar year of the cohort start date (issue #1197):
+
+   - `index_event_breakdown` gains a `cohort_start_year` column, which is part of the primary key
+   - This lets users spot temporal shifts in index event codes, for example a deprecated HCPCS code causing a drop in cohort incidence
+   - Existing results schemas are upgraded by `Migration_8-v4_0_0_index_event_breakdown_cohort_start_year.sql`, which backfills prior rows with `-1` (year not recorded)
+
 CohortDiagnostics 3.4.2
 =======================
 

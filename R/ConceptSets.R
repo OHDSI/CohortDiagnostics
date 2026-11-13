@@ -847,7 +847,8 @@ runConceptSetDiagnostics <- function(connection,
           cohortId = numeric(),
           databaseId = character(),
           domainField = character(),
-          domainTable = character()
+          domainTable = character(),
+          cohortStartYear = integer()
         )
       }
 
