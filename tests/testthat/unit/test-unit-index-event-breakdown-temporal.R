@@ -175,3 +175,56 @@ test_that("index event breakdown with cohort_start_year groups results by year",
   expect_equal(mockData$conceptCount[mockData$cohortStartYear == 2020], 50)
   expect_equal(mockData$conceptCount[mockData$cohortStartYear == 2021], 30)
 })
+
+test_that("every union branch groups by the concept column it selects", {
+  # Spark/Databricks rejects a column that is selected without being in the
+  # GROUP BY ("MISSING_AGGREGATION"), which postgres silently allows. Assert
+  # the two always match, for every dialect, so a copy/paste slip cannot reach
+  # a platform that is only tested downstream.
+  template <- SqlRender::readSql(
+    system.file("sql", "sql_server", "CohortEntryBreakdown.sql",
+      package = "CohortDiagnostics"
+    )
+  )
+
+  # oracle reformats the aliased columns, so the simple line matching below
+  # cannot pair them up; the three dialects used in practice are sufficient
+  for (dialect in c("sql server", "postgresql", "spark")) {
+    rendered <- SqlRender::render(template,
+      cdm_database_schema = "cdm",
+      vocabulary_database_schema = "vocab",
+      cohort_database_schema = "results",
+      cohort_table = "cohort",
+      cohort_id = 1,
+      domain_table = "visit_occurrence",
+      domain_start_date = "visit_start_date",
+      domain_concept_id = "visit_concept_id",
+      domain_source_concept_id = "visit_source_concept_id",
+      use_source_concept_id = TRUE,
+      primary_codeset_ids = "1",
+      concept_set_table = "cs",
+      store = TRUE,
+      store_table = "bd",
+      warnOnMissingParameters = FALSE
+    )
+    sql <- SqlRender::translate(rendered, targetDialect = dialect)
+    lines <- strsplit(sql, "\n", fixed = TRUE)[[1]]
+
+    selected <- regmatches(
+      lines[grep("AS concept_id", lines, fixed = TRUE)],
+      gregexpr("visit_(source_)?concept_id AS concept_id", lines[grep("AS concept_id", lines, fixed = TRUE)])
+    )
+    selected <- sub(" AS concept_id$", "", unlist(selected))
+    grouped <- trimws(lines[grep("GROUP BY visit_", lines)])
+
+    expect_equal(length(selected), 6, info = dialect)
+    expect_equal(length(grouped), 6, info = dialect)
+
+    for (i in seq_along(selected)) {
+      expect_true(
+        grepl(selected[[i]], grouped[[i]], fixed = TRUE),
+        info = paste(dialect, "branch", i, "selects", selected[[i]], "but groups by", grouped[[i]])
+      )
+    }
+  }
+})

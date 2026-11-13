@@ -94,7 +94,7 @@ FROM (
 		ON @domain_concept_id = concept_id
 	WHERE cohort_definition_id = @cohort_id
 		AND codeset_id IN (@primary_codeset_ids)
-	GROUP BY @domain_concept_id, YEAR(cohort_start_date)
+	GROUP BY @domain_source_concept_id, YEAR(cohort_start_date)
 	
 	UNION
 	
