@@ -110,20 +110,24 @@ runTemporalCharacterizationDiagnostic <- function(context,
     )
 
     feCohortTable <- cohortTableNames$cohortSampleTable
-    feCohortDefinitionSet <-
-      CohortGenerator::sampleCohortDefinitionSet(
-        connection = context$connection,
-        cohortDefinitionSet = cohortDefinitionSet,
-        tempEmulationSchema = context$tempEmulationSchema,
-        cohortDatabaseSchema = context$cohortDatabaseSchema,
-        cohortTableNames = cohortTableNames,
-        n = sampleN,
-        seed = seed,
-        seedArgs = seedArgs,
-        identifierExpression = "cohortId",
-        incremental = context$incremental,
-        incrementalFolder = context$incrementalFolder
-      )
+    sampleArgs <- list(
+      connection = context$connection,
+      cohortDefinitionSet = cohortDefinitionSet,
+      tempEmulationSchema = context$tempEmulationSchema,
+      cohortDatabaseSchema = context$cohortDatabaseSchema,
+      cohortTableNames = cohortTableNames,
+      n = sampleN,
+      seed = seed,
+      seedArgs = seedArgs,
+      identifierExpression = "cohortId",
+      incremental = context$incremental
+    )
+    # File-based incremental records were removed in CohortGenerator 1.0.0, where the
+    # argument is deprecated and warns if supplied
+    if (utils::packageVersion("CohortGenerator") < "1.0.0") {
+      sampleArgs$incrementalFolder <- context$incrementalFolder
+    }
+    feCohortDefinitionSet <- do.call(CohortGenerator::sampleCohortDefinitionSet, sampleArgs)
 
     feCohortCounts <- computeCohortCounts(
       connection = context$connection,
