@@ -88,6 +88,7 @@ included_source_concept,source_concept_id,bigint,No,Yes,Yes,No,No,No,No,source c
 included_source_concept,concept_subjects,float,Yes,No,No,Yes,Yes,No,No,subjects with concept
 included_source_concept,concept_count,float,Yes,No,No,Yes,Yes,No,No,total count of concept
 index_event_breakdown,concept_id,bigint,Yes,Yes,No,Yes,No,No,No,concept identifier
+index_event_breakdown,cohort_start_year,int,Yes,Yes,No,Yes,No,No,No,calendar year of cohort start date
 index_event_breakdown,concept_count,float,Yes,No,No,Yes,Yes,No,No,number of concept occurences
 index_event_breakdown,subject_count,float,Yes,No,No,Yes,Yes,No,No,number of distinct people
 index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
