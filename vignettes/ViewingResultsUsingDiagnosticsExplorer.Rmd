@@ -99,7 +99,7 @@ This archive will contain a fully executable shiny application.
 
 # Running the app using Database mode
 
-We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. > 100mb, as using the sqlite database may leading sluggish performance. Currently, only postgres server is fully supported, though platforms with DatabaseConnector support may work (currently experimental). See Vignette on Database mode on how to load data into remote database.
+We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. > 100mb, as using the sqlite database may leading sluggish performance. Currently, only postgres server is fully supported, though platforms with DatabaseConnector support may work (currently experimental). For database mode, please use the `uploadResults` function to upload results to a remote database.
 
 
 # Running over the network

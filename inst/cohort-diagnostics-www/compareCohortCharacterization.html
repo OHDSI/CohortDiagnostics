@@ -1,0 +1,15 @@
+<h4>Description</h4>
+<p>A table or plot showing cohort characteristics (covariates) for two cohorts side-by-side. These characteristics are captured at different time windows that can be selected </p>
+<p>The Raw table shows all captured covariates. These include binary and continuous covariates (e.g. the Charlson comorbidity index). For each covariate the table lists the mean, which for binary covariates is equal to the proportion, the standard deviation (SD), and the standardized difference of the mean (StdDiff).</p>
+<p>The plot shows all covariates, include binary and continuous covariates. The x-axis represents the mean value in the target cohort, the y-axis the mean value in the comparator cohort. Each dot represents a covariate, and the color indicates the domain of the covariate being plotted. In the plot, domains are fixed (even though additional domains may exist in data) to ensure the color of the domains are consistently applied. </p>
+<p>Filters maybe used to limit the number of covariates being visualized/tabulated. Filters are available for analysis names and domain names. </p>
+
+<p> You can either select different cohorts in the same database, the same cohort in different database or different cohorts in different databases</p>
+
+
+<h4>What to look for</h4>
+<ul>
+<li>Are there major differences between the two cohorts? For example, if we wish to compute a propensity score between two cohorts, concepts that have very high proportion in one cohort and a very low proportion in the other may lead to a perfectly predictive model.</li>
+<li>In general, how comparable are two cohorts? If we wish to compare two exposures, but the cohorts differ over many characteristics, we may be able to fit a propensity model and compute an estimate, but we may have concerns over the generalizability of the results.</li>
+</ul>
+

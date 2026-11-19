@@ -1,3 +1,36 @@
+CohortDiagnostics 4.0.0
+=======================
+
+Changes:
+
+1. First CRAN submission. Package has been extensively refactored for CRAN compliance including:
+
+   - Reorganized test suite into unit and integration test directories with proper testthat 3 edition support
+   - Unit tests use mocked database connections and require no external database setup
+   - Integration tests are gated behind `INTEGRATION_TESTS=TRUE` environment variable
+   - Removed `StagedInstall: no` from DESCRIPTION
+   - Removed `devtools` and `remotes` from Suggests
+   - Migrated diagnostic execution to a context-based pattern with `createDiagnosticsContext()`, `initializeDiagnostics()`, and `finalizeDiagnostics()`
+   - All examples use `\dontrun{}` instead of `\donttest{}` for CRAN compliance
+
+2. Incremental mode re-design to fix incorrect results on repeat runs:
+
+   - Result files are now merged using the primary key declared in the results data model, so re-running a cohort replaces (rather than duplicates) its prior rows, including characterization covariate values that previously had no merge key
+   - Task checksums now combine the cohort definition (sql, json, name) with a run-level fingerprint of the settings and package version, so changing settings invalidates prior results
+   - Record-keeping and result files are written atomically (temp file + rename) and consistently use empty strings for missing values
+   - Corrected the `temporal_time_ref` and `metadata` merge keys
+   - Stale incremental records are pruned for cohorts removed from a full run
+   - Added a primary-key deduplication safety net so repeated runs can no longer
+     produce duplicate rows (e.g. cohort overlap covariate values that appeared as
+     >100% overlap in the diagnostics explorer)
+   - Removed unused `subsetToRequiredCombis` and `writeToCsv.tbl_Andromeda` code
+
+3. Index event breakdown is now stratified by the calendar year of the cohort start date (issue #1197):
+
+   - `index_event_breakdown` gains a `cohort_start_year` column, which is part of the primary key
+   - This lets users spot temporal shifts in index event codes, for example a deprecated HCPCS code causing a drop in cohort incidence
+   - Existing results schemas are upgraded by `Migration_8-v4_0_0_index_event_breakdown_cohort_start_year.sql`, which backfills prior rows with `-1` (year not recorded)
+
 CohortDiagnostics 3.4.2
 =======================
 

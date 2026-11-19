@@ -1,0 +1,25 @@
+<h4>Description</h4>
+<p>A table showing the number of subject that match specific inclusion rules in the cohort definition. Note that this table will be empty if no inclusion rules have been specified.</p>
+
+<p>The table contains the following columns:
+<ul>
+<li>Sequence: The order in which the inclusion rules are applied to the cohort.</li>
+<li>Name: The name of the inclusion rule.</li>
+<li>Meet: The number of cohort entries (records) that meet the entry event definition and the specific inclusion rule indicated in the row.</li>
+<li>Gain: The number of cohort entries (records) that would be gained if this inclusion rule was dropped.</li>
+<li>Total: The number of cohort entries (records) meeting the entry event definition. In other words, the number of cohort entries before applying any of the inclusion rules.</li>
+<li>Remain: The number of cohort entries (records) remaining after applying the specific inclusion rule, and all preceding rules.</li>
+</ul>
+</p>
+
+<h4>Options</h4>
+<p>You can select a database in the side bar to see the inclusion rule statistics observed in that database.</p>
+<p>Select the cohort to explore in the side bar.</p>
+
+<h4>What to look for</h4>
+<ul>
+<li>Are there inclusion rules that nobody meets in a database? For example, requiring a specialist visit that is not recorded in a specific database.</li>
+<li>Are there inclusion rules that have no effect in a database? For example, requiring no occurrence of a prior disease code that is not recorded in a database.</li>
+<li>Are there inclusion rules that drastically reduce the population? In this case we might worry about generalizability. For example, if we require a diagnostic procedure, and only a small fraction meets this criteria, we may wonder if this identifies a special population that differs from the overall population in significant ways.</li>
+</ul>
+

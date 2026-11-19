@@ -24,7 +24,8 @@ exportCharacterization <- function(characteristics,
                                    analysisRefFileName,
                                    timeRefFileName = NULL,
                                    counts,
-                                   minCellCount) {
+                                   minCellCount,
+                                   cohortIds = NULL) {
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
@@ -94,13 +95,21 @@ exportCharacterization <- function(characteristics,
         data = timeRef,
         fileName = timeRefFileName,
         incremental = TRUE,
-        analysisId = timeRef$timeId
+        timeId = timeRef$timeId
       )
 
+      # The covariate value files are scoped to cohorts. Key on cohortId so that
+      # re-running a cohort replaces (rather than duplicates) its prior values.
+      covariateCohortIds <- if (is.null(cohortIds)) {
+        as.numeric(dplyr::pull(characteristics$filteredCovariates, "cohortId"))
+      } else {
+        cohortIds
+      }
       writeToCsv(
         data = characteristics$filteredCovariates,
         fileName = covariateValueFileName,
-        incremental = TRUE
+        incremental = TRUE,
+        cohortId = covariateCohortIds
       )
     }
   }
@@ -116,10 +125,16 @@ exportCharacterization <- function(characteristics,
     )
 
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
+      continuousCohortIds <- if (is.null(cohortIds)) {
+        as.numeric(dplyr::pull(characteristics$filteredCovariatesContinous, "cohortId"))
+      } else {
+        cohortIds
+      }
       writeToCsv(
         data = characteristics$filteredCovariatesContinous,
         fileName = covariateValueContFileName,
-        incremental = TRUE
+        incremental = TRUE,
+        cohortId = continuousCohortIds
       )
     }
   }

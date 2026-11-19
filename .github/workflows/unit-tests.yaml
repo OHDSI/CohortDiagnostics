@@ -1,0 +1,99 @@
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+name: unit-tests
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {r: 'release'}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GH_TOKEN }}
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      # Run only unit tests
+      RUN_UNIT_TESTS: "TRUE"
+      SKIP_DB_TESTS: "TRUE"
+      INTEGRATION_TESTS: "FALSE"
+      # Results data model DDL tests run against the postgres service below
+      POSTGRES_PASSWORD: postgres
+      CD_TEST_POSTGRES_HOST: localhost/postgres
+      CD_TEST_POSTGRES_PORT: "5432"
+      CD_TEST_POSTGRES_USER: postgres
+      DATABASECONNECTOR_JAR_FOLDER: ${{ github.workspace }}/.jdbcDrivers
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Install system requirements
+        run: |
+          sudo apt-get install -y libssh-dev
+          Rscript -e 'install.packages("remotes")'
+          while read -r cmd
+          do
+            eval sudo $cmd
+          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "22.04"))')
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            OHDSI/OhdsiShinyModules
+          needs: check
+
+      - name: Download JDBC drivers
+        run: |
+          # DatabaseConnector >= 8 needs an explicit pathToDriver, and the
+          # results data model tests connect to the postgres service above
+          Rscript -e 'dir.create(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"), showWarnings = FALSE); DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))'
+
+      - name: Install package
+        run: |
+          # the DDL tests use system.file() and SqlRender::loadRenderTranslateSql(),
+          # which require the package to be installed rather than merely loaded
+          Rscript -e 'install.packages(".", repos = NULL, type = "source")'
+
+      - name: Verify postgres is reachable
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -c "SELECT version();"
+
+      - name: Run Unit Tests
+        run: |
+          # test_check/test_local with load_package = "installed": the results
+          # data model tests need system.file() to resolve the packaged SQL,
+          # which only works against an installed package (under
+          # load_package = "source" system.file() returns "" and those tests
+          # would skip rather than run).
+          Rscript -e 'testthat::test_local(filter = "unit-", stop_on_failure = TRUE, load_package = "installed")'
+        shell: bash

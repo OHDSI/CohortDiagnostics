@@ -1,0 +1,39 @@
+# All available hooks: https://pre-commit.com/hooks.html
+# R specific hooks: https://github.com/lorenzwalthert/precommit
+#
+# Install the pre-commit framework (requires Python) and the git hook once:
+#   pip install pre-commit          # or: brew install pre-commit
+#   precommit::install_precommit()  # from the {precommit} R package
+#   pre-commit install
+#
+# Run all hooks against the whole repository:
+#   pre-commit run --all-files
+repos:
+-   repo: https://github.com/lorenzwalthert/precommit
+    rev: v0.4.3
+    hooks:
+    -   id: style-files
+        args: [--style_pkg=styler, --style_fun=tidyverse_style]
+    -   id: lintr
+    -   id: parsable-R
+    -   id: no-browser-statement
+    -   id: no-debug-statement
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: check-added-large-files
+        args: ['--maxkb=200']
+    -   id: end-of-file-fixer
+        exclude: '\.Rd$'
+    -   id: trailing-whitespace
+        exclude: '\.Rd$'
+    -   id: check-merge-conflict
+    -   id: check-case-conflict
+    -   id: mixed-line-ending
+-   repo: local
+    hooks:
+    -   id: forbid-to-commit
+        name: Don't commit common R artifacts
+        entry: Cannot commit .Rhistory, .RData, .Rds or .rds.
+        language: fail
+        files: '\.(Rhistory|RData|Rds|rds)$'
