@@ -11,6 +11,68 @@ dependency management.
 - Load the package during development with `pkgload::load_all()` or `devtools::load_all()`.
 - Regenerate documentation with `devtools::document()` after editing roxygen comments.
 
+## Dependency management: `renv` is mandatory
+
+**Always use the project `renv`. Never install into, or run against, the system library.**
+
+`renv.lock` is the single source of truth for versions. `renv/` (the library) is
+git-ignored, but `renv.lock`, `renv/activate.R` and `renv/settings.json` **must** be committed.
+
+Start every session by restoring and confirming the environment:
+
+```bash
+Rscript -e 'renv::restore()'      # first time in a fresh clone / after pulling a lockfile change
+Rscript -e 'renv::status()'       # must report "No issues found"
+```
+
+If you add, remove or upgrade a dependency:
+
+```r
+renv::install("package")   # or upgrade
+renv::snapshot()           # writes renv.lock — commit it with the code change
+```
+
+Guidance:
+- `DESCRIPTION` declares the *minimum* versions; `renv.lock` pins the *exact* ones. Update both.
+- Never edit `renv.lock` by hand.
+- Do not `install.packages()` outside renv, and do not point `R_LIBS` at
+  `/Library/Frameworks/R.framework/.../library`. Doing so is the root cause of the
+  "package segfaults on load" failures described below.
+
+### Why this rule exists: the libR ABI trap
+
+Native R packages are linked at build time against `libR.dylib`. If installed packages were
+built by a *different* R than the one you launch, they crash with:
+
+```
+ *** caught segfault ***
+address 0x0, cause 'invalid permissions'
+ 1: dyn.load(file, DLLpath = DLLpath, ...)
+```
+
+This is **not** a bug in CohortDiagnostics, and not a Java problem — it happens for any
+compiled package (`checkmate`, `Rcpp`, `rJava`, ...), including ones with no Java at all.
+Confirm with:
+
+```bash
+otool -L <lib>/<pkg>/libs/<pkg>.so | grep libR.dylib   # shows the R it was built against
+Rscript -e 'cat(R.version.string)'                      # shows the R you are running
+```
+
+If those disagree, rebuild inside renv (`renv::restore()`) rather than debugging the package.
+
+### Environment gotcha: `getcwd` and package installs
+
+If the shell's working directory is unreachable, R's installer fails with
+`current working directory cannot be ascertained` and packages "install" as empty
+directories. Anchor installs to a real directory first:
+
+```r
+setwd("/tmp")   # or any known-good path
+renv::restore()
+```
+
+
 ## Code style and linting
 
 The package follows the [tidyverse style guide](https://style.tidyverse.org/) and is checked

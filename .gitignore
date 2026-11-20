@@ -17,11 +17,15 @@ tests/testthat/testthat-problems.rds
 /.idea
 /doc/
 /Meta/
-/renv/.gitignore
 /sql/
-.Rprofile
-/renv/
-renv.lock
+# renv: the project library is regenerable and stays ignored, but the lockfile,
+# activation script and renv settings MUST be committed so every agent and CI
+# run resolves the exact same package versions.
+/renv/library/
+/renv/staging/
+/renv/local/
+/renv/cellar/
+renv/.gitignore
 *.sqlite
 MergedCohortDiagnosticsData.7z
 inst/shiny/DiagnosticsExplorer/UserCredentials.csv
