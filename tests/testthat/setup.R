@@ -21,6 +21,15 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
   dbms <- getOption("dbms", default = "sqlite")
   message("************* Testing on ", dbms, " *************")
 
+  # Every table created in the cohort schema by the test setup and used by the
+  # tests. getCohortTableNames() does not include the characterization sample
+  # table (see CharacterizationDiagnostic.R), so it is added explicitly.
+  getTestCohortTableNames <- function(cohortTable) {
+    tableNames <- unlist(CohortGenerator::getCohortTableNames(cohortTable = cohortTable), use.names = FALSE)
+    tableNames <- c(tableNames, paste0(cohortTable, "_cd_sample"))
+    return(unique(sort(tableNames)))
+  }
+
   if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
     jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
   } else {
@@ -137,20 +146,26 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
       skipCdmTests <- TRUE
     }
 
-    # Cleanup
-    sql <- "IF OBJECT_ID('@cohort_database_schema.@cohort_table', 'U') IS NOT NULL
-                DROP TABLE @cohort_database_schema.@cohort_table;"
+    # Cleanup. All tables created by createCohortTables() below must be dropped,
+    # otherwise they accumulate in the shared test database. See #1201.
+    cleanupSql <- "IF OBJECT_ID('@cohort_database_schema.@table', 'U') IS NOT NULL
+                DROP TABLE @cohort_database_schema.@table;"
 
     withr::defer(
       {
         if (!skipCdmTests) {
           connection <- DatabaseConnector::connect(connectionDetails)
-          DatabaseConnector::renderTranslateExecuteSql(connection,
-            sql,
-            cohort_database_schema = cohortDatabaseSchema,
-            cohort_table = cohortTable
-          )
-          DatabaseConnector::disconnect(connection)
+          on.exit(DatabaseConnector::disconnect(connection))
+          tableNames <- getTestCohortTableNames(cohortTable)
+          for (tableName in tableNames) {
+            DatabaseConnector::renderTranslateExecuteSql(connection,
+              cleanupSql,
+              cohort_database_schema = cohortDatabaseSchema,
+              table = tableName,
+              progressBar = FALSE,
+              reportOverallTime = FALSE
+            )
+          }
         }
       },
       testthat::teardown_env()
