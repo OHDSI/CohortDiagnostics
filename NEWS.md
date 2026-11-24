@@ -31,6 +31,12 @@ Changes:
    - This lets users spot temporal shifts in index event codes, for example a deprecated HCPCS code causing a drop in cohort incidence
    - Existing results schemas are upgraded by `Migration_8-v4_0_0_index_event_breakdown_cohort_start_year.sql`, which backfills prior rows with `-1` (year not recorded)
 
+4. Fixed `uploadResults()` discarding all but one row of `incidence_rate` and `vocabulary` (issue #1203):
+
+   - Both tables were missing primary keys in `resultsDataModelSpecification.csv`. Uploads de-duplicate on the specification primary key, and with no key columns every row after the first was treated as a duplicate and removed
+   - `incidence_rate` now uses `cohort_id`, `database_id`, `gender`, `age_group` and `calendar_year`; `vocabulary` uses `vocabulary_id`
+   - `time_series` has the same missing primary key and is not fixed here: its rows are not unique on the descriptive columns, so a key cannot be chosen without first resolving why the export produces multiple rows that differ only in their measure columns
+
 CohortDiagnostics 3.4.2
 =======================
 

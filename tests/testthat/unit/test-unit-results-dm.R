@@ -53,6 +53,29 @@ test_that("Schema specs define primary keys for core tables", {
   expect_true("cohort" %in% (pkSpecs %>% dplyr::filter(columnName == "cohort_id") %>% pull(tableName)))
 })
 
+test_that("Tables with a non-trivial row identity define primary keys (#1203)", {
+  # ResultModelManager::checkAndFixDuplicateRows() de-duplicates uploads on the
+  # specification primary key. A table with no primary key is reduced to a single
+  # row on upload, because duplicated(x[, character(0)]) marks every row but the
+  # first as a duplicate.
+  specs <- getResultsDataModelSpecifications()
+  expect_true(all(c("incidence_rate", "vocabulary") %in%
+    (specs %>% dplyr::filter(primaryKey == "Yes") %>% dplyr::pull(tableName))))
+
+  incidenceRateKey <- specs %>%
+    dplyr::filter(tableName == "incidence_rate" & primaryKey == "Yes") %>%
+    dplyr::pull(columnName)
+  expect_setequal(
+    incidenceRateKey,
+    c("cohort_id", "database_id", "gender", "age_group", "calendar_year")
+  )
+
+  vocabularyKey <- specs %>%
+    dplyr::filter(tableName == "vocabulary" & primaryKey == "Yes") %>%
+    dplyr::pull(columnName)
+  expect_equal(vocabularyKey, "vocabulary_id")
+})
+
 test_that("All columns in specs have data types", {
   specs <- getResultsDataModelSpecifications()
   expect_false(any(is.na(specs$dataType)))
