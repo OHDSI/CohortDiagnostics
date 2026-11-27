@@ -799,10 +799,16 @@ runConceptSetDiagnostics <- function(connection,
 
 
             if (nrow(primaryCodesetIds) > 0) {
-              counts <-
-                lapply(split(primaryCodesetIds, seq_len(nrow(primaryCodesetIds))), getCounts) %>%
-                dplyr::bind_rows() %>%
-                dplyr::arrange(.data$conceptCount)
+              domainCounts <- lapply(
+                split(primaryCodesetIds, seq_len(nrow(primaryCodesetIds))),
+                getCounts
+              )
+              domainCounts <- Filter(function(x) nrow(x) > 0, domainCounts)
+              counts <- dplyr::bind_rows(domainCounts)
+              if (nrow(counts) > 0) {
+                counts <- counts %>%
+                  dplyr::arrange(.data$conceptCount)
+              }
             } else {
               counts <- data.frame()
             }
